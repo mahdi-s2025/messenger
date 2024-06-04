@@ -1,13 +1,14 @@
 package model;
 
+import java.io.Serializable;
 import java.util.Date;
 
-public class Message {
+public class Message implements Serializable {
     private String text;
     private final Date sentDate;
     private final int senderId;  // maybe it doesn't usage
     private final int receiverId; // maybe it doesn't usage
-    
+
     public Message(String text, int senderId, int receiverId) {
         this.text = text;
         this.sentDate = new Date();
