@@ -6,6 +6,7 @@ import model.UserAccount;
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.util.Objects;
 
 public class DBController {
     private DBController() {
@@ -34,15 +35,40 @@ public class DBController {
 
     }
 
+    // throws shit
+    public boolean login(String userName  ,  String password ) throws Exception {
+        UserAccount account;
+        String cmd = "SELECT * FROM users WHERE username = '" + userName + "' ";
+        ResultSet result = Database.getDatabase().executeQuery(cmd);
+        if (result.next()){
+            if (Objects.equals(password, result.getString("password"))) {
+                account = new UserAccount(result.getString("name"), result.getString("username"),
+                        result.getString("password"), result.getString("phoneNumber"));
+                account.setID(result.getLong("ID"));
+                UserAccountController.getUserAccountController().setUser(account);
+                return true;
+            }
+            else
+                throw new Exception("The password entered is incorrect");
+        }
+        throw new Exception("The username entered is incorrect");
+    }
+
+
+
+
 
 
     public void addUser(UserAccount user) throws Exception {
-        String cmd  = "INSERT INTO users VALUES ( '" + user.getName() + "' , '" + user.getUsername() + "' , " +
-                "'" + user.getPassword() + "' , '" + user.getPhoneNumber() + "')";
+        String cmd  = "INSERT INTO users(name , username , password , phoneNumber) VALUES ( '%s' , '%s' , '%s' , '%s')".formatted(user.getName(), user.getUsername(), user.getPassword(), user.getPhoneNumber());
         PreparedStatement statement = Database.getDatabase().getConnection().prepareStatement(cmd , Statement.RETURN_GENERATED_KEYS);
         statement.executeUpdate();
-        user.setID(statement.getGeneratedKeys().getLong(1));
+        ResultSet generatedKey =  statement.getGeneratedKeys();
+        if (generatedKey.next())
+            user.setID(generatedKey.getLong(1));
+        statement.close();
     }
+
 
 
 
