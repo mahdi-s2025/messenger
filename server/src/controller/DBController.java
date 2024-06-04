@@ -1,6 +1,9 @@
 package controller;
 
+import model.Database;
 import model.UserAccount;
+
+import java.sql.ResultSet;
 
 public class DBController {
     private DBController() {
@@ -14,15 +17,23 @@ public class DBController {
         return dbController;
     }
 
-    private UserAccount user ;
+    // throws shit
+    private UserAccount findUsername(String username) throws Exception {
+        String cmd = "SELECT * FROM users WHERE username = '" + username + "' ";
+        ResultSet result = Database.getDatabase().executeQuery(cmd);
+        UserAccount targetUser = null;
+        if (result.next()){
+            targetUser = new UserAccount(result.getLong("ID" ), result.getString("name" ) , result.getString("username") ,
+                    result.getString("password") , result.getString("phoneNumber"));
+        }
+        return targetUser;
 
-    public UserAccount getUser() {
-        return user;
+
     }
 
-    public void setUser(UserAccount user) {
-        this.user = user;
-    }
+
+
+
 
 
 }
