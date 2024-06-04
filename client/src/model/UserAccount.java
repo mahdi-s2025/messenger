@@ -1,6 +1,7 @@
 package model;
 
 public class UserAccount {
+    private final long ID;
     private String name;
     private String username;
     private String password;
@@ -8,11 +9,16 @@ public class UserAccount {
     // maybe need a list of contacts
     // also maybe need a new table in database to storage them.
 
-    public UserAccount(String name, String username, String password, String phoneNumber) {
+    public UserAccount(long ID, String name, String username, String password, String phoneNumber) {
+        this.ID = ID;
         this.name = name;
         this.username = username;
         this.password = password;
         this.phoneNumber = phoneNumber;
+    }
+
+    public long getID() {
+        return ID;
     }
 
     public String getName() {
