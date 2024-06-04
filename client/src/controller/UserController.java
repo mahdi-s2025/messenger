@@ -14,15 +14,19 @@ public class UserController {
     private final ObjectOutputStream outObj;
     private final ObjectInputStream inObj;
 
-    private UserController() throws IOException {
-        client = new Socket("localhost", 8085);
-        out = new PrintWriter(new BufferedOutputStream(client.getOutputStream()), true);
-        in = new BufferedReader(new InputStreamReader(client.getInputStream()));
-        outObj = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
-        inObj = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
+    private UserController() throws Exception {
+        try {
+            client = new Socket("localhost", 8085);
+            out = new PrintWriter(new BufferedOutputStream(client.getOutputStream()), true);
+            in = new BufferedReader(new InputStreamReader(client.getInputStream()));
+            outObj = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
+            inObj = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
+        } catch (IOException e) {
+            throw new Exception("Server connection failed!");
+        }
     }
 
-    public static UserController getUserController() throws IOException {
+    public static UserController getUserController() throws Exception {
         if (userController == null) {
             userController = new UserController();
         }
@@ -62,32 +66,41 @@ public class UserController {
     public UserAccount signup(String name, String username, String password, String phoneNumber) throws Exception {
         out.println("signup");
         out.println(String.format("%s-%s-%s-%s", name, username, password, phoneNumber));
-        UserAccount newUserAccount;  // maybe should initialize with null
         // exception handling
 
         try {
-            newUserAccount = (UserAccount) inObj.readObject();
-            userAccount = newUserAccount;
+            userAccount = (UserAccount) inObj.readObject();
+            return userAccount;
         } catch (IOException | ClassNotFoundException e) {   // maybe the exceptions should be handled differently
             throw new Exception("Sign up failed!");
         }
-        return newUserAccount;
     }
 
     public UserAccount login(String username, String password) throws Exception {
         out.println("login");
         out.println(String.format("%s-%s", username, password));
-        UserAccount loggedInUser;  // maybe should initialize with null
         // exception handling
 
         try {
-            loggedInUser = (UserAccount) inObj.readObject();
-            userAccount = loggedInUser;
+            userAccount = (UserAccount) inObj.readObject();
+            return userAccount;
         } catch (IOException | ClassNotFoundException e) {   // maybe the exceptions should be handled differently
             throw new Exception("Login failed!");
         }
-        return loggedInUser;
     }
 
-}
+    public long ping() throws Exception {
+        out.println("ping");
+        long startTime = System.currentTimeMillis();
+        out.println("Sample text to calculate ping");
+        try {
+            in.readLine();
+            long endTime = System.currentTimeMillis();
+            return endTime - startTime;
+        } catch (IOException e) {
+            throw new Exception("Server doesn't response");
+        }
+    }
+
+    // send message method for chat room and pv
 }
