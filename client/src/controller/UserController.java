@@ -45,7 +45,5 @@ public class UserController {
 
     public BufferedReader getIn() {
         return in;
-    }
-
-    public UserAccount signUp() {}
+    }g
 }
