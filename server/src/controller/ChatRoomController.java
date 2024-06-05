@@ -11,6 +11,7 @@ import java.net.Socket;
 public class ChatRoomController implements Runnable{
 
     public ChatRoomController() throws IOException {
+        run();
     }
     public Socket connectClient() throws IOException {
         try {
@@ -41,10 +42,7 @@ public class ChatRoomController implements Runnable{
     public void run() {
         try {
              Message message = receiveMessageFromClient();
-            System.out.println(message.getReceiverId());
-            System.out.println(message.getSenderId());
-            System.out.println(message.getSentDate());
-            System.out.println(message.getText());
+            DBController.getDbController().addMessage(message);
         }
         catch (Exception e){
             System.out.println(e.getMessage());
