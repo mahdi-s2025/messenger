@@ -1,11 +1,13 @@
 package controller;
 
 import model.Database;
+import model.Message;
 import model.UserAccount;
 
 import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
+import java.text.SimpleDateFormat;
 import java.util.Objects;
 
 public class DBController {
@@ -67,6 +69,16 @@ public class DBController {
         if (generatedKey.next())
             user.setID(generatedKey.getLong(1));
         statement.close();
+    }
+
+    // throws shit
+    public void addMessage(Message message) throws Exception {
+        // changing format for save to database
+        SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+        String formattedDate = date.format(message.getSentDate());
+
+        String cmd  = "INSERT INTO messages(senderID , receiverID , message , sentDate) VALUES ( '%d' , '%d' , '%s' , '%s')".formatted(message.getSenderId(), message.getReceiverId(), message.getText(), formattedDate);
+        Database.getDatabase().executeSQL(cmd);
     }
 
 

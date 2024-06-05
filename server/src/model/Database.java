@@ -48,7 +48,7 @@ public class Database {
             statement.execute(cmd);
 
         } catch (Exception e) {
-            throw new Exception("invalid command");
+            System.out.println(e.getMessage());
         }
     }
 
