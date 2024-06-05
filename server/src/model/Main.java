@@ -1,7 +1,8 @@
 package model;
 
-import controller.ChatRoomController;
+
 import controller.DBController;
+import controller.communicationHandler;
 import model.Message;
 
 import java.io.IOException;
@@ -11,11 +12,14 @@ import java.net.Socket;
 
 public class Main {
     public static void main(String[] args) throws Exception {
-//
-//         ChatRoomController a = new ChatRoomController();
-//         a.run();
 
-        DBController.getDbController().addMessage(new Message("shit" , 1 , 0  ));
+        ServerSocket serverSocket = new ServerSocket(1235);
+
+        while (true){
+            Socket clientSocket = serverSocket.accept();
+            communicationHandler  handler = new communicationHandler(clientSocket);
+            handler.run();
+        }
     }
 }
 
