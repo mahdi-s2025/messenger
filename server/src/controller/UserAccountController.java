@@ -1,5 +1,6 @@
 package controller;
 
+import model.Database;
 import model.UserAccount;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
@@ -28,7 +29,7 @@ public class UserAccountController {
     }
 
     public UserAccount signUp(String name , String userName , String password , String phoneNumber ) throws Exception {
-        if (DBController.getDbController().findUsername(userName) == null)
+        if (DBController.getDbController().findUsername(userName) != null)
             throw new Exception("duplicate username");
         switch (passwordStrength(password)){
             case 0 -> throw new Exception("password is too short. it has less than 8 characters");
@@ -41,6 +42,7 @@ public class UserAccountController {
                 if (!validPhoneNumber(phoneNumber))
                     throw new Exception("invalid phone number");
                 UserAccount account = new UserAccount(name , userName , password  , phoneNumber);
+                DBController.getDbController().addUser(account);
                 return account;
             }
 
@@ -48,12 +50,7 @@ public class UserAccountController {
         }
     }
 
-    public void login(String userName  ,  String password ){
 
-
-
-
-    }
 
 
 
