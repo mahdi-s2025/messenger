@@ -102,5 +102,13 @@ public class UserController {
         }
     }
 
-    // send message method for chat room and pv
+    public void sendToPV(int SenderID, String message) {
+        out.println("sendToPV");
+        out.println(String.format("%s-%s", SenderID, message));
+    }
+
+    public void sendToChatRoom(String message) {
+        out.println("sendToChatRoom");
+        out.println(String.format("0-%s", message));
+    }
 }
