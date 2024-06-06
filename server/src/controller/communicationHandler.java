@@ -23,19 +23,20 @@ public class communicationHandler implements Runnable {
     }
 
 
-    @Override
-    public void run()  {
-        try {
-
-            ObjectInputStream getter = new ObjectInputStream(socket.getInputStream());
-            Message message ;
-            while((message = (Message) getter.readObject()) != null ){
+    public void run() {
+        try (ObjectInputStream getter = new ObjectInputStream(socket.getInputStream())) {
+            Message message;
+            while ((message = (Message) getter.readObject()) != null) {
                 DBController.getDbController().addMessage(message);
             }
-
-        }catch (Exception e){
-            System.out.println(e.getLocalizedMessage());
+        } catch (Exception e) {
+            e.printStackTrace();
+        } finally {
+            try {
+                socket.close();
+            } catch (Exception e) {
+                e.printStackTrace();
+            }
         }
-
     }
 }
