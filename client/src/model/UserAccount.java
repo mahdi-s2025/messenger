@@ -3,20 +3,23 @@ package model;
 import java.io.Serializable;
 
 public class UserAccount implements Serializable {
-    private final long ID;
+    private long ID;
     private String name;
     private String username;
     private String password;
     private String phoneNumber;
-    // maybe need a list of contacts
+    // maybe need a list of user contacts
     // also maybe need a new table in database to storage them.
 
-    public UserAccount(long ID, String name, String username, String password, String phoneNumber) {
-        this.ID = ID;
+    public UserAccount(String name, String username, String password, String phoneNumber) {
         this.name = name;
         this.username = username;
         this.password = password;
         this.phoneNumber = phoneNumber;
+    }
+
+    public void setID(long ID) {
+        this.ID = ID;
     }
 
     public long getID() {

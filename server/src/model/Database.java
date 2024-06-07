@@ -8,8 +8,13 @@ public class Database {
         URL = "jdbc:mysql://localhost/messenger";
         userName = "root";
         password = "root";
-        Class.forName("com.mysql.cj.jdbc.Driver");
-        connection = DriverManager.getConnection(URL, userName, password);
+        try {
+            Class.forName("com.mysql.cj.jdbc.Driver");
+            connection = DriverManager.getConnection(URL, userName, password);
+        } catch (Exception e) {
+            throw new Exception("Database connection failed!");
+            //throw new Exception(e);
+        }
     }
 
     private static Database database;
@@ -19,7 +24,6 @@ public class Database {
             database = new Database();
         return database;
     }
-
 
     final private String URL;
     final private String userName;
@@ -46,9 +50,9 @@ public class Database {
         try {
             Statement statement = connection.prepareStatement(cmd);
             statement.execute(cmd);
-
+            statement.close();
         } catch (Exception e) {
-            System.out.println(e.getMessage());
+            throw new Exception("Error executing SQL: " + cmd);
         }
     }
 
@@ -57,9 +61,7 @@ public class Database {
             Statement statement = connection.prepareStatement(cmd);
             return statement.executeQuery(cmd);
         } catch (Exception e) {
-            throw new Exception("invalid command");
+            throw new Exception("Error executing Query: " + cmd);
         }
     }
-
-
 }

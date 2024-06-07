@@ -2,51 +2,132 @@ package controller;
 
 import model.Message;
 import model.UserAccount;
-import java.io.ObjectInputStream;
+
+import java.io.*;
 import java.net.Socket;
 
-public class ClientController implements Runnable {
-    public ClientController(UserAccount loggedInUser, Socket client) {
-        this.loggedInUser = loggedInUser;
+public class ClientController extends Thread {
+    private UserAccount userAccount;
+    private final Socket client;
+    private final ObjectOutputStream out;
+    private final ObjectInputStream in;
+    private final UserAccountController userAccountController;
+
+    public ClientController(Socket client) throws Exception {
+        this.userAccountController = UserAccountController.getUserAccountController();
         this.client = client;
+        try {
+            out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
+            out.writeUTF("Server connected");
+            out.flush();
+            in = new ObjectInputStream(new BufferedInputStream(client.getInputStream()));
+            in.readUTF();
+        } catch (IOException e) {
+            throw new Exception("Client connection failed!");
+        }
     }
 
-    private UserAccount loggedInUser;
-
-    private Socket client;
-
-    public UserAccount getLoggedInUser() {
-        return loggedInUser;
+    public UserAccount getUserAccount() {
+        return userAccount;
     }
 
-    public void setLoggedInUser(UserAccount loggedInUser) {
-        this.loggedInUser = loggedInUser;
+    public void setUserAccount(UserAccount userAccount) {
+        this.userAccount = userAccount;
     }
 
     public Socket getClient() {
         return client;
     }
 
-    public void setClient(Socket client) {
-        this.client = client;
-    }
-
     @Override
     public void run() {
+        String[] commands = new String[1];
 
-        try (ObjectInputStream getter = new ObjectInputStream(client.getInputStream())) {
-            Message message;
-            while ((message = (Message) getter.readObject()) != null) {
-                DBController.getDbController().addMessage(message);
-            }
-        } catch (Exception e) {
-            System.out.println(e.getMessage());
-        } finally {
+        while (userAccount == null) {
             try {
-                client.close();
-            } catch (Exception e) {
-                System.out.println(e.getMessage());;
+                out.writeUTF("Please login or signup!");
+                out.flush();
+                commands = in.readUTF().split("-");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
             }
+
+            if (commands[0].equals("exit")) break;
+
+            switch (commands[0]) {
+
+                case "Signup" -> {
+                    if (commands.length != 5) break;
+                    try {
+                        String username = userAccountController.checkUsername(commands[2]);
+                        String password = userAccountController.checkPassword(commands[3]);
+                        String phoneNumber = userAccountController.checkPhoneNumber(commands[4]);
+                        userAccount = DBController.getDbController().signUp(commands[1], username, password, phoneNumber);
+                        out.writeUTF("Signup");
+                        out.flush();
+                        out.writeObject(userAccount);
+                        out.flush();
+                    } catch (Exception e) {
+                        try {
+                            //e.printStackTrace(System.err);
+                            out.writeUTF(e.getMessage());
+                            out.flush();
+                        } catch (Exception e1) {
+                            e1.printStackTrace(System.err);
+                        }
+                    }
+                }
+
+                case "Login" -> {
+                    if (commands.length != 3) break;
+                    try {
+                        userAccount = DBController.getDbController().login(commands[1], commands[2]);
+                        out.writeUTF("Login");
+                        out.flush();
+                        out.writeObject(userAccount);
+                        out.flush();
+                    } catch (Exception e) {
+                        try {
+                            out.writeUTF(e.getMessage());
+                            out.flush();
+                        } catch (Exception e1) {
+                            e1.printStackTrace(System.err);
+                        }
+                    }
+                }
+
+                default -> {
+                    try {
+                        out.writeUTF("Invalid command!");
+                        out.flush();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
+        }
+
+        while (!commands[0].equals("exit")) {
+            try {
+                commands = in.readUTF().split("-");
+            } catch (IOException e) {
+                throw new RuntimeException(e);
+            }
+
+            if (commands[0].equals("exit")) break;
+
+
+        }
+
+        try {
+            out.writeUTF("exit");
+            out.flush();
+            CommunicationHandler.getCommunicationHandler().getClientList().remove(this);
+            out.close();
+            in.close();
+            if (!client.isClosed()) client.close();
+        } catch (IOException e) {
+            e.printStackTrace(System.err);
         }
     }
 }

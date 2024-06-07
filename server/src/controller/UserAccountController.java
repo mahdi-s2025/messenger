@@ -1,75 +1,67 @@
 package controller;
 
-import model.Database;
 import model.UserAccount;
 import java.util.regex.Matcher;
 import java.util.regex.Pattern;
 
 public class UserAccountController {
 
-    private UserAccountController() {
+    private UserAccountController() {}
+
+    private static UserAccountController userAccountController;
+//    private UserAccount loggedUser;
+
+    public static UserAccountController getUserAccountController() {
+        if (userAccountController == null)
+            userAccountController = new UserAccountController();
+        return userAccountController;
     }
 
-    private static UserAccountController userAccount;
 
-    public static UserAccountController getUserAccountController(){
-        if (userAccount == null)
-            userAccount = new UserAccountController();
-        return userAccount;
-    }
+//    public UserAccount getLoggedUser() {
+//        return loggedUser;
+//    }
 
-    private UserAccount user;
+//    public void setLoggedUser(UserAccount loggedUser) {
+//        this.loggedUser = loggedUser;
+//    }
 
-    public UserAccount getUser() {
-        return user;
-    }
-
-    public void setUser(UserAccount user) {
-        this.user = user;
-    }
-
-    public UserAccount signUp(String name , String userName , String password , String phoneNumber ) throws Exception {
-        if (DBController.getDbController().findUsername(userName) != null)
-            throw new Exception("duplicate username");
-        switch (passwordStrength(password)){
-            case 0 -> throw new Exception("password is too short. it has less than 8 characters");
-            case 1 -> throw new Exception("password is weak. its strength is 1 of 4, and you can't use it.");
-            case 2 -> throw new Exception("password is weak. its strength is 2 of 4, and you can't use it");
-            case 3 -> throw new Exception("password is weak. its strength is 3 of 4, and you can't use it");
-            case 5 -> throw new Exception("password is too long. it has more than 30 characters");
-            case 6 -> throw new Exception("password has invalid character. we can use only 0-9, a-z, A-Z, !@#$%^&*() to make password");
+    public String checkPassword(String password) throws Exception {
+        switch (passwordStrength(password)) {
+            case 0 -> throw new Exception("The password is too short.\nIt must have more than 8 characters");
+            case 1 -> throw new Exception("The password is weak. Its strength is 1 out of 4." +
+                    "\nYou must use 0-9, a-z, A-Z, and at least one special character: ! @ # % ^ & * ( )");
+            case 2 -> throw new Exception("The password is weak. Its strength is 2 out of 4." +
+                    "\nYou must use 0-9, a-z, A-Z, and at least one special character: ! @ # % ^ & * ( )");
+            case 3 -> throw new Exception("The password is weak. Its strength is 3 out of 4." +
+                    "\nYou must use 0-9, a-z, A-Z, and at least one special character: ! @ # % ^ & * ( )");
+            case 5 -> throw new Exception("The password is too long.\nIt shouldn't have more than 30 characters");
+            case 6 -> throw new Exception("The password has invalid character." +
+                    "\nYou must use 0-9, a-z, A-Z, and at least one special character: ! @ # % ^ & * ( )");
             default -> {
-                if (!validPhoneNumber(phoneNumber))
-                    throw new Exception("invalid phone number");
-                UserAccount account = new UserAccount(name , userName , password  , phoneNumber);
-                DBController.getDbController().addUser(account);
-                return account;
+                return password;
             }
-
-
         }
     }
 
+    public String checkUsername(String username) throws Exception {
+        if (DBController.getDbController().findUser(username) != null)
+            throw new Exception("Username already exists!");
+        Pattern usernamePattern = Pattern.compile("^[A-Za-z1-9]+(_)?[A-Za-z1-9]+$");
+        Matcher usernameMatcher = usernamePattern.matcher(username);
+        if (!usernameMatcher.matches()) {
+            throw new Exception("Username is invalid!");
+        }
+        return username;
+    }
 
+    public String checkPhoneNumber(String phoneNumber) throws Exception {
+        if (!validPhoneNumber(phoneNumber))
+            throw new Exception("Invalid phone number");
+        return phoneNumber;
+    }
 
-
-
-
-
-
-
-
-    /*
-    return 0 -> password is too short. it has less than 8 characters
-    return 5 -> password is too long. it has more than 30 characters
-    return 6 -> password has invalid character. we can use only 0-9, a-z, A-Z, !@#$%^&*() to make password
-    return 1 -> password is weak. its strength is 1 of 4, and you can't use it.
-    return 2 -> password is weak. its strength is 2 of 4, and you can't use it.
-    return 3 -> password is weak. its strength is 3 of 4, and you can't use it.
-    return 4 -> password is weak. its strength is 4 of 4, and you can use it. :)
-     */
-
-    public static int passwordStrength(String password) {
+    public int passwordStrength(String password) {
         int strength = 0;
         if (password.length() < 8)
             return 0;
@@ -97,15 +89,9 @@ public class UserAccountController {
         return strength;
     }
 
-
-    /*
-     if phone number is valid returns true. else returns false.
-     */
-    public static boolean validPhoneNumber(String phoneNumber) {
+    public boolean validPhoneNumber(String phoneNumber) {
         Pattern phoneNumberValidPattern = Pattern.compile("^09[\\d]{9}");
         Matcher phoneNumberMatcher = phoneNumberValidPattern.matcher(phoneNumber);
         return phoneNumberMatcher.matches();
     }
-
-
 }

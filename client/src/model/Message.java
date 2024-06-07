@@ -6,13 +6,13 @@ import java.util.Date;
 public class Message implements Serializable {
     private String text;
     private final Date sentDate;
-    private final int senderId;  // maybe it doesn't usage
-    private final int receiverId; // maybe it doesn't usage
+    private final UserAccount senderUser;
+    private final long receiverId;  // maybe need receiverUser;
 
-    public Message(String text, int senderId, int receiverId) {
+    public Message(String text, UserAccount senderUser, long receiverId) {
         this.text = text;
         this.sentDate = new Date();
-        this.senderId = senderId;
+        this.senderUser = senderUser;
         this.receiverId = receiverId;
     }
 
@@ -28,11 +28,11 @@ public class Message implements Serializable {
         return sentDate;
     }
 
-    public int getSenderId() {
-        return senderId;
+    public UserAccount getSenderUser() {
+        return senderUser;
     }
 
-    public int getReceiverId() {
+    public long getReceiverId() {
         return receiverId;
     }
 }
