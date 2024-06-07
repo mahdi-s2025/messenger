@@ -116,7 +116,47 @@ public class ClientController extends Thread {
 
             if (commands[0].equals("exit")) break;
 
-
+            switch (commands[0]) {
+                case "SendMessage" -> {
+                    if (commands.length != 3) break;
+                    Message message = new Message(commands[2], userAccount, Long.parseLong(commands[1]));
+                    try {
+                        DBController.getDbController().addMessage(message);
+                        if (message.getReceiverId() == 0) {
+                            for (ClientController client : CommunicationHandler.getCommunicationHandler().getClientList()) {
+                                client.out.writeUTF("ReceiveMessage");
+                                client.out.flush();
+                                client.out.writeObject(message);
+                                client.out.flush();
+                            }
+                        } else {
+                            for (ClientController client : CommunicationHandler.getCommunicationHandler().getClientList()) {
+                                if (client.userAccount.getID() == message.getReceiverId()) {
+                                    client.out.writeUTF("ReceiveMessage");
+                                    client.out.flush();
+                                    client.out.writeObject(message);
+                                    client.out.flush();
+                                }
+                            }
+                        }
+                    } catch (Exception e) {
+                        try {
+                            out.writeUTF(e.getMessage());
+                            out.flush();
+                        } catch (Exception e1) {
+                            e1.printStackTrace(System.err);
+                        }
+                    }
+                }
+                default -> {
+                    try {
+                        out.writeUTF("Invalid command!");
+                        out.flush();
+                    } catch (IOException e) {
+                        throw new RuntimeException(e);
+                    }
+                }
+            }
         }
 
         try {

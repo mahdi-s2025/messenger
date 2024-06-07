@@ -49,7 +49,6 @@ public class DBController {
                 UserAccount account = new UserAccount(result.getString("name"), result.getString("username"),
                         result.getString("password"), result.getString("phoneNumber"));
                 account.setID(result.getLong("ID"));
-                UserAccountController.getUserAccountController().setLoggedUser(account);
                 result.close();
                 return account;
             }
@@ -73,7 +72,6 @@ public class DBController {
             newUser.setID(generatedKey.getLong(1));
         statement.close();
         generatedKey.close();
-        UserAccountController.getUserAccountController().setLoggedUser(newUser);
         return newUser;
     }
 
@@ -82,7 +80,7 @@ public class DBController {
         SimpleDateFormat date = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
         String formattedDate = date.format(message.getSentDate());
 
-        String cmd = String.format("INSERT INTO messages VALUES ('%d', '%d', %s', '%s')",
+        String cmd = String.format("INSERT INTO messages VALUES ('%d', '%d', '%s', '%s')",
                 message.getSenderUser().getID(), message.getReceiverId(), message.getText(), formattedDate);
 
         database.executeSQL(cmd);

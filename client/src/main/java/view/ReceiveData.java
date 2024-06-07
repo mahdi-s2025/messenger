@@ -1,6 +1,7 @@
 package view;
 
 import model.ClientSocket;
+import model.Message;
 import model.UserAccount;
 
 import java.io.*;
@@ -56,6 +57,15 @@ public class ReceiveData extends Thread {
                     try {
                         userAccount = (UserAccount) in.readObject();
                         SendData.getSendData().setUserAccount(userAccount);
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+                case "ReceiveMessage" -> {
+                    try {
+                        Message message = (Message) in.readObject();
+                        System.out.println(message.getSenderUser().getName() + "\t " + message.getSenderUser().getUsername() + " :");
+                        System.out.println(message.getText());
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                     }
