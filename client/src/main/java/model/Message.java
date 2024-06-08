@@ -5,9 +5,13 @@ import java.util.Date;
 
 public class Message implements Serializable {
     private String text;
-    private final Date sentDate;
+    private Date sentDate;
     private final UserAccount senderUser;
     private final UserAccount receiverUser;
+
+    public void setSentDate(Date sentDate) {
+        this.sentDate = sentDate;
+    }
 
     public Message(String text, UserAccount senderUser, UserAccount receiverUser) {
         this.text = text;

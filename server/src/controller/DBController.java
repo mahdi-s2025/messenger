@@ -171,4 +171,9 @@ public class DBController {
         result.close();
         return messages;
     }
+
+    public void addContact(Long userID, Long contactID) throws Exception {
+        String cmd = String.format("INSERT INTO contacts VALUES ('%s', '%s')", userID, contactID);
+        database.executeSQL(cmd);
+    }
 }

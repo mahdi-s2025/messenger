@@ -12,7 +12,7 @@ public class UserAccount implements Serializable {
     private String phoneNumber;
 
     private List<UserAccount> contacts;
-    private List<ChatPage> chatPages;
+    //    private List<ChatPage> chatPages;
     private ChatPage currentChatPage;
 
     public UserAccount(String name, String username, String password, String phoneNumber) {
@@ -21,7 +21,7 @@ public class UserAccount implements Serializable {
         this.password = password;
         this.phoneNumber = phoneNumber;
         this.contacts = new ArrayList<>();
-        this.chatPages = new ArrayList<>();
+//        this.chatPages = new ArrayList<>();
     }
 
     public void setID(long ID) {
@@ -72,13 +72,13 @@ public class UserAccount implements Serializable {
         this.contacts = contacts;
     }
 
-    public List<ChatPage> getChatPages() {
-        return chatPages;
-    }
-
-    public void setChatPages(List<ChatPage> chatPages) {
-        this.chatPages = chatPages;
-    }
+//    public List<ChatPage> getChatPages() {
+//        return chatPages;
+//    }
+//
+//    public void setChatPages(List<ChatPage> chatPages) {
+//        this.chatPages = chatPages;
+//    }
 
     public ChatPage getCurrentChatPage() {
         return currentChatPage;
@@ -86,10 +86,5 @@ public class UserAccount implements Serializable {
 
     public void setCurrentChatPage(ChatPage currentChatPage) {
         this.currentChatPage = currentChatPage;
-    }
-
-    @Override
-    public String toString() {
-        return name + "\t" + username;
     }
 }

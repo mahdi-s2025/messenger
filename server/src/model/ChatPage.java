@@ -1,9 +1,10 @@
 package model;
 
 
+import java.io.Serializable;
 import java.util.List;
 
-public class ChatPage {
+public class ChatPage implements Serializable {
     private UserAccount user1;
     private UserAccount user2;
     private List<Message> messages;

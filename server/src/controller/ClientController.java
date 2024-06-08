@@ -16,18 +16,12 @@ public class ClientController extends Thread {
     private final ObjectInputStream in;
     private final UserAccountController userAccountController;
     private final DBController dbController;
-    private final UserAccount chatRoom_user;
-    private ChatPage chatRoom;
 
 
     public ClientController(Socket client) throws Exception {
         this.userAccountController = UserAccountController.getUserAccountController();
         this.client = client;
         dbController = DBController.getDbController();
-        chatRoom_user = new UserAccount("chatroom", "chatroom", "chatroom", "0");
-        chatRoom_user.setID(0);
-        userAccount.setCurrentChatPage(chatRoom);
-        userAccount.getChatPages().add(chatRoom);
         try {
             out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
             out.writeUTF("Server connected");
@@ -192,7 +186,34 @@ public class ClientController extends Thread {
                     }
                 }
 
+                case "SelectUser" -> {
+                    if (commands.length != 2) break;
+                    try {
+                        UserAccount targetUser = dbController.findUser(commands[1]);
+                        if (userAccount.getContacts().contains(targetUser)) {
+                            ChatPage newChat = null;
+                            for (ChatPage chatPage : userAccount.getChatPages()) {
+                                if (chatPage.getUser2() == targetUser || chatPage.getUser1() == targetUser) {
+                                    newChat = chatPage;
+                                    break;
+                                }
+                            }
+                            out.writeUTF("SelectUser");
+                            out.flush();
+                            out.writeObject(newChat);
+                            out.flush();
+                        } else {
 
+                        }
+                    } catch (Exception e) {
+                        try {
+                            out.writeUTF(e.getMessage());
+                            out.flush();
+                        } catch (Exception e1) {
+                            e1.printStackTrace(System.err);
+                        }
+                    }
+                }
 
                 default -> {
                     try {
