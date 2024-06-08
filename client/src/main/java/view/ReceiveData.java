@@ -6,6 +6,9 @@ import model.UserAccount;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Objects;
 
 public class ReceiveData extends Thread {
     private static ReceiveData receiveData;
@@ -70,6 +73,21 @@ public class ReceiveData extends Thread {
                         System.out.println(e.getMessage());
                     }
                 }
+
+                case "OnlineUsers" -> {
+                    try {
+                        // List<UserAccount> onlineUsers = new ArrayList<>();
+                        List objects = (List) in.readObject();
+                        for (Object object : objects) {
+                            if (object instanceof UserAccount onlineUser) {
+                                System.out.println(onlineUser);
+                            }
+                        }
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+
                 default -> System.out.println(resultCommand);
             }
             try {

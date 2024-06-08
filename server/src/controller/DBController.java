@@ -1,5 +1,6 @@
 package controller;
 
+import model.ChatPage;
 import model.Database;
 import model.Message;
 import model.UserAccount;
@@ -138,6 +139,31 @@ public class DBController {
         chatRoom.setID(0);
         while (result.next()) {
             Message message = new Message(result.getString("message"), user, chatRoom);
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            message.setSentDate(formatter.parse(result.getString("sentDate")));
+            messages.add(message);
+        }
+        result.close();
+        return messages;
+    }
+    public List<ChatPage> getChatPages(UserAccount user) throws Exception {
+        List<ChatPage> chatPages = new ArrayList<>();
+        for (UserAccount contact : user.getContacts()) {
+            ChatPage chatPage = new ChatPage(user, contact, getMessages(user.getID(), contact.getID()));
+            chatPages.add(chatPage);
+        }
+        return chatPages;
+    }
+
+    public List<Message> getAllMessagesInChatRoom() throws Exception {
+        List<Message> messages = new ArrayList<>();
+        String cmd = "SELECT * FROM messages WHERE receiverID = 0 ORDER BY sentDate";
+        ResultSet result = database.executeQuery(cmd);
+        UserAccount chatRoom = new UserAccount("chatroom", "chatroom", "chatroom", "0");
+        chatRoom.setID(0);
+        while (result.next()) {
+            Message message = new Message(result.getString("message"),
+                    findUser(result.getLong("senderID")), chatRoom);
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             message.setSentDate(formatter.parse(result.getString("sentDate")));
             messages.add(message);

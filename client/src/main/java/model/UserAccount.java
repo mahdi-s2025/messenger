@@ -87,4 +87,9 @@ public class UserAccount implements Serializable {
     public void setCurrentChatPage(ChatPage currentChatPage) {
         this.currentChatPage = currentChatPage;
     }
+
+    @Override
+    public String toString() {
+        return name + "\t" + username;
+    }
 }

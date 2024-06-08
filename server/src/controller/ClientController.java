@@ -1,10 +1,13 @@
 package controller;
 
+import model.ChatPage;
 import model.Message;
 import model.UserAccount;
 
 import java.io.*;
 import java.net.Socket;
+import java.util.ArrayList;
+import java.util.List;
 
 public class ClientController extends Thread {
     private UserAccount userAccount;
@@ -13,11 +16,18 @@ public class ClientController extends Thread {
     private final ObjectInputStream in;
     private final UserAccountController userAccountController;
     private final DBController dbController;
+    private final UserAccount chatRoom_user;
+    private ChatPage chatRoom;
+
 
     public ClientController(Socket client) throws Exception {
         this.userAccountController = UserAccountController.getUserAccountController();
         this.client = client;
         dbController = DBController.getDbController();
+        chatRoom_user = new UserAccount("chatroom", "chatroom", "chatroom", "0");
+        chatRoom_user.setID(0);
+        userAccount.setCurrentChatPage(chatRoom);
+        userAccount.getChatPages().add(chatRoom);
         try {
             out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
             out.writeUTF("Server connected");
@@ -65,6 +75,7 @@ public class ClientController extends Thread {
                         String password = userAccountController.checkPassword(commands[3]);
                         String phoneNumber = userAccountController.checkPhoneNumber(commands[4]);
                         userAccount = dbController.signUp(commands[1], username, password, phoneNumber);
+                        chatRoom = new ChatPage(userAccount, chatRoom_user, dbController.getAllMessagesInChatRoom());
                         out.writeUTF("Signup");
                         out.flush();
                         out.writeObject(userAccount);
@@ -84,6 +95,9 @@ public class ClientController extends Thread {
                     if (commands.length != 3) break;
                     try {
                         userAccount = dbController.login(commands[1], commands[2]);
+                        chatRoom = new ChatPage(userAccount, chatRoom_user, dbController.getAllMessagesInChatRoom());
+                        userAccount.setContacts(dbController.getContacts(userAccount.getID()));
+                        userAccount.getChatPages().addAll(dbController.getChatPages(userAccount));
                         out.writeUTF("Login");
                         out.flush();
                         out.writeObject(userAccount);
@@ -156,6 +170,30 @@ public class ClientController extends Thread {
                         }
                     }
                 }
+
+                case "OnlineUsers" -> {
+                    if (commands.length != 1) break;
+                    List<UserAccount> onlineUsers = new ArrayList<>();
+                    try {
+                        for (ClientController client : CommunicationHandler.getCommunicationHandler().getClientList()) {
+                            onlineUsers.add(client.userAccount);
+                        }
+                        out.writeUTF("OnlineUsers");
+                        out.flush();
+                        out.writeObject(onlineUsers);
+                        out.flush();
+                    } catch (IOException e) {
+                        try {
+                            out.writeUTF(e.getMessage());
+                            out.flush();
+                        } catch (Exception e1) {
+                            e1.printStackTrace(System.err);
+                        }
+                    }
+                }
+
+
+
                 default -> {
                     try {
                         out.writeUTF("Invalid command!");

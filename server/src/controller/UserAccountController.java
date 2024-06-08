@@ -17,15 +17,6 @@ public class UserAccountController {
         return userAccountController;
     }
 
-
-//    public UserAccount getLoggedUser() {
-//        return loggedUser;
-//    }
-
-//    public void setLoggedUser(UserAccount loggedUser) {
-//        this.loggedUser = loggedUser;
-//    }
-
     public String checkPassword(String password) throws Exception {
         switch (passwordStrength(password)) {
             case 0 -> throw new Exception("The password is too short.\nIt must have more than 8 characters");
