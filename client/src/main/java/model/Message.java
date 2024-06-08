@@ -7,13 +7,13 @@ public class Message implements Serializable {
     private String text;
     private final Date sentDate;
     private final UserAccount senderUser;
-    private final long receiverId;  // maybe need receiverUser;
+    private final UserAccount receiverUser;
 
-    public Message(String text, UserAccount senderUser, long receiverId) {
+    public Message(String text, UserAccount senderUser, UserAccount receiverUser) {
         this.text = text;
         this.sentDate = new Date();
         this.senderUser = senderUser;
-        this.receiverId = receiverId;
+        this.receiverUser = receiverUser;
     }
 
     public String getText() {
@@ -32,7 +32,7 @@ public class Message implements Serializable {
         return senderUser;
     }
 
-    public long getReceiverId() {
-        return receiverId;
+    public UserAccount getReceiverUser() {
+        return receiverUser;
     }
 }

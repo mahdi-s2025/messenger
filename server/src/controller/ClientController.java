@@ -12,10 +12,12 @@ public class ClientController extends Thread {
     private final ObjectOutputStream out;
     private final ObjectInputStream in;
     private final UserAccountController userAccountController;
+    private final DBController dbController;
 
     public ClientController(Socket client) throws Exception {
         this.userAccountController = UserAccountController.getUserAccountController();
         this.client = client;
+        dbController = DBController.getDbController();
         try {
             out = new ObjectOutputStream(new BufferedOutputStream(client.getOutputStream()));
             out.writeUTF("Server connected");
@@ -62,7 +64,7 @@ public class ClientController extends Thread {
                         String username = userAccountController.checkUsername(commands[2]);
                         String password = userAccountController.checkPassword(commands[3]);
                         String phoneNumber = userAccountController.checkPhoneNumber(commands[4]);
-                        userAccount = DBController.getDbController().signUp(commands[1], username, password, phoneNumber);
+                        userAccount = dbController.signUp(commands[1], username, password, phoneNumber);
                         out.writeUTF("Signup");
                         out.flush();
                         out.writeObject(userAccount);
@@ -81,7 +83,7 @@ public class ClientController extends Thread {
                 case "Login" -> {
                     if (commands.length != 3) break;
                     try {
-                        userAccount = DBController.getDbController().login(commands[1], commands[2]);
+                        userAccount = dbController.login(commands[1], commands[2]);
                         out.writeUTF("Login");
                         out.flush();
                         out.writeObject(userAccount);
@@ -119,19 +121,25 @@ public class ClientController extends Thread {
             switch (commands[0]) {
                 case "SendMessage" -> {
                     if (commands.length != 3) break;
-                    Message message = new Message(commands[2], userAccount, Long.parseLong(commands[1]));
                     try {
-                        DBController.getDbController().addMessage(message);
-                        if (message.getReceiverId() == 0) {
+                        if (Long.parseLong(commands[1]) == 0) {
+                            UserAccount chatRoom = new UserAccount("chatroom", "chatroom", "chatroom", "0");
+                            chatRoom.setID(0);
+                            Message message = new Message(commands[2], userAccount, chatRoom);
+                            DBController.getDbController().addMessage(message);
                             for (ClientController client : CommunicationHandler.getCommunicationHandler().getClientList()) {
-                                client.out.writeUTF("ReceiveMessage");
-                                client.out.flush();
-                                client.out.writeObject(message);
-                                client.out.flush();
+                                if (client != this) {
+                                    client.out.writeUTF("ReceiveMessage");
+                                    client.out.flush();
+                                    client.out.writeObject(message);
+                                    client.out.flush();
+                                }
                             }
                         } else {
+                            Message message = new Message(commands[2], userAccount, dbController.findUser(Long.parseLong(commands[1])));
+                            DBController.getDbController().addMessage(message);
                             for (ClientController client : CommunicationHandler.getCommunicationHandler().getClientList()) {
-                                if (client.userAccount.getID() == message.getReceiverId()) {
+                                if (client.userAccount.getID() == message.getReceiverUser().getID()) {
                                     client.out.writeUTF("ReceiveMessage");
                                     client.out.flush();
                                     client.out.writeObject(message);

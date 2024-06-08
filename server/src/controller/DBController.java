@@ -8,6 +8,9 @@ import java.sql.PreparedStatement;
 import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
+import java.util.ArrayList;
+import java.util.Date;
+import java.util.List;
 
 public class DBController {
     private static DBController dbController ;
@@ -30,6 +33,15 @@ public class DBController {
 
     public UserAccount findUser(String username) throws Exception {
         String cmd = "SELECT * FROM users WHERE username = '" + username + "'";
+        return findUserFromDB(cmd);
+    }
+
+    public UserAccount findUser(long ID) throws Exception {
+        String cmd = "SELECT * FROM users WHERE ID = '" + ID + "'";
+        return findUserFromDB(cmd);
+    }
+
+    private UserAccount findUserFromDB(String cmd) throws Exception {
         ResultSet result = database.executeQuery(cmd);
         UserAccount targetUser = null;
         if (result.next()) {
@@ -41,8 +53,8 @@ public class DBController {
         return targetUser;
     }
 
-    public UserAccount login(String userName, String password ) throws Exception {
-        String cmd = "SELECT * FROM users WHERE username = '" + userName + "'";
+    public UserAccount login(String username, String password ) throws Exception {
+        String cmd = "SELECT * FROM users WHERE username = '" + username + "'";
         ResultSet result = database.executeQuery(cmd);
         if (result.next()) {
             if (password.equals(result.getString("password"))) {
@@ -61,10 +73,10 @@ public class DBController {
         throw new Exception("Username not found!");
     }
 
-    public UserAccount signUp(String name , String userName , String password , String phoneNumber ) throws Exception {
-        UserAccount newUser = new UserAccount(name, userName, password, phoneNumber);
+    public UserAccount signUp(String name , String username , String password , String phoneNumber ) throws Exception {
+        UserAccount newUser = new UserAccount(name, username, password, phoneNumber);
         String cmd = String.format("INSERT INTO users (name, username, password, phoneNumber) VALUES ('%s', '%s', '%s', '%s')",
-                name, userName, password, phoneNumber);
+                name, username, password, phoneNumber);
         PreparedStatement statement = database.getConnection().prepareStatement(cmd, Statement.RETURN_GENERATED_KEYS);
         statement.executeUpdate();
         ResultSet generatedKey = statement.getGeneratedKeys();
@@ -81,11 +93,56 @@ public class DBController {
         String formattedDate = date.format(message.getSentDate());
 
         String cmd = String.format("INSERT INTO messages VALUES ('%d', '%d', '%s', '%s')",
-                message.getSenderUser().getID(), message.getReceiverId(), message.getText(), formattedDate);
+                message.getSenderUser().getID(), message.getReceiverUser().getID(), message.getText(), formattedDate);
 
         database.executeSQL(cmd);
     }
+
+    public List<UserAccount> getContacts(long userID) throws Exception {
+        List<UserAccount> contacts = new ArrayList<>();
+        String cmd = "SELECT (ID, name, username, password, phoneNumber) FROM users INNER JOIN" +
+                " contacts ON users.ID = contacts.contactID WHERE users.ID = '" + userID + "'";
+        ResultSet result = database.executeQuery(cmd);
+        while (result.next()) {
+            UserAccount contact = new UserAccount(result.getString("name"), result.getString("username"),
+                    result.getString("password"), result.getString("phoneNumber"));
+            contact.setID(result.getLong("ID"));
+            contacts.add(contact);
+        }
+        result.close();
+        return contacts;
+    }
+
+    public List<Message> getMessages(long user1ID, long user2ID) throws Exception {
+        List<Message> messages = new ArrayList<>();
+        String cmd = String.format("SELECT * FROM messages WHERE (senderID = '%S' AND " +
+                "receiverID = '%S') OR (senderID = '%S' AND receiverID = '%S') ORDER BY sentDate", user1ID, user2ID, user2ID, user1ID);
+        ResultSet result = database.executeQuery(cmd);
+        while (result.next()) {
+            Message message = new Message(result.getString("message"), findUser(result.getLong("senderID")),
+                    findUser(result.getLong("receiverID")));
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            message.setSentDate(formatter.parse(result.getString("sentDate")));
+            messages.add(message);
+        }
+        result.close();
+        return messages;
+    }
+
+    public List<Message> getUserMessagesInChatRoom(UserAccount user) throws Exception {
+        List<Message> messages = new ArrayList<>();
+        String cmd = String.format("SELECT (message, sentDate) FROM messages WHERE (senderID = '%S' AND " +
+                "receiverID = 0) ORDER BY sentDate", user.getID());
+        ResultSet result = database.executeQuery(cmd);
+        UserAccount chatRoom = new UserAccount("chatroom", "chatroom", "chatroom", "0");
+        chatRoom.setID(0);
+        while (result.next()) {
+            Message message = new Message(result.getString("message"), user, chatRoom);
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            message.setSentDate(formatter.parse(result.getString("sentDate")));
+            messages.add(message);
+        }
+        result.close();
+        return messages;
+    }
 }
-
-
-
