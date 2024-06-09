@@ -99,10 +99,15 @@ public class DBController {
         database.executeSQL(cmd);
     }
 
+    public void addContact(Long userID, Long contactID) throws Exception {
+        String cmd = String.format("INSERT INTO contacts VALUES ('%s', '%s')", userID, contactID);
+        database.executeSQL(cmd);
+    }
+
     public List<UserAccount> getContacts(long userID) throws Exception {
         List<UserAccount> contacts = new ArrayList<>();
-        String cmd = "SELECT (ID, name, username, password, phoneNumber) FROM users INNER JOIN" +
-                " contacts ON users.ID = contacts.contactID WHERE users.ID = '" + userID + "'";
+        String cmd = "SELECT ID, name, username, password, phoneNumber FROM users INNER JOIN " +
+                "contacts ON users.ID = contacts.contactID WHERE users.ID = '" + userID + "'";
         ResultSet result = database.executeQuery(cmd);
         while (result.next()) {
             UserAccount contact = new UserAccount(result.getString("name"), result.getString("username"),
@@ -130,40 +135,40 @@ public class DBController {
         return messages;
     }
 
-    public List<Message> getUserMessagesInChatRoom(UserAccount user) throws Exception {
-        List<Message> messages = new ArrayList<>();
-        String cmd = String.format("SELECT (message, sentDate) FROM messages WHERE (senderID = '%S' AND " +
-                "receiverID = 0) ORDER BY sentDate", user.getID());
-        ResultSet result = database.executeQuery(cmd);
-        UserAccount chatRoom = new UserAccount("chatroom", "chatroom", "chatroom", "0");
-        chatRoom.setID(0);
-        while (result.next()) {
-            Message message = new Message(result.getString("message"), user, chatRoom);
-            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-            message.setSentDate(formatter.parse(result.getString("sentDate")));
-            messages.add(message);
-        }
-        result.close();
-        return messages;
-    }
-    public List<ChatPage> getChatPages(UserAccount user) throws Exception {
-        List<ChatPage> chatPages = new ArrayList<>();
-        for (UserAccount contact : user.getContacts()) {
-            ChatPage chatPage = new ChatPage(user, contact, getMessages(user.getID(), contact.getID()));
-            chatPages.add(chatPage);
-        }
-        return chatPages;
-    }
+//    public List<Message> getUserMessagesInChatRoom(UserAccount user) throws Exception {
+//        List<Message> messages = new ArrayList<>();
+//        String cmd = String.format("SELECT (message, sentDate) FROM messages WHERE (senderID = '%S' AND " +
+//                "receiverID = 0) ORDER BY sentDate", user.getID());
+//        ResultSet result = database.executeQuery(cmd);
+//        UserAccount chatRoom_user = new UserAccount("chatroom", "chatroom", "chatroom", "0");
+//        chatRoom_user.setID(0);
+//        while (result.next()) {
+//            Message message = new Message(result.getString("message"), user, chatRoom_user);
+//            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+//            message.setSentDate(formatter.parse(result.getString("sentDate")));
+//            messages.add(message);
+//        }
+//        result.close();
+//        return messages;
+//    }
+//    public List<ChatPage> getChatPages(UserAccount user) throws Exception {
+//        List<ChatPage> chatPages = new ArrayList<>();
+//        for (UserAccount contact : user.getContacts()) {
+//            ChatPage chatPage = new ChatPage(user, contact, getMessages(user.getID(), contact.getID()));
+//            chatPages.add(chatPage);
+//        }
+//        return chatPages;
+//    }
 
     public List<Message> getAllMessagesInChatRoom() throws Exception {
         List<Message> messages = new ArrayList<>();
         String cmd = "SELECT * FROM messages WHERE receiverID = 0 ORDER BY sentDate";
         ResultSet result = database.executeQuery(cmd);
-        UserAccount chatRoom = new UserAccount("chatroom", "chatroom", "chatroom", "0");
-        chatRoom.setID(0);
+        UserAccount chatRoom_user = new UserAccount("chatroom", "chatroom", "chatroom", "0");
+        chatRoom_user.setID(0);
         while (result.next()) {
             Message message = new Message(result.getString("message"),
-                    findUser(result.getLong("senderID")), chatRoom);
+                    findUser(result.getLong("senderID")), chatRoom_user);
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             message.setSentDate(formatter.parse(result.getString("sentDate")));
             messages.add(message);
@@ -172,8 +177,4 @@ public class DBController {
         return messages;
     }
 
-    public void addContact(Long userID, Long contactID) throws Exception {
-        String cmd = String.format("INSERT INTO contacts VALUES ('%s', '%s')", userID, contactID);
-        database.executeSQL(cmd);
-    }
 }

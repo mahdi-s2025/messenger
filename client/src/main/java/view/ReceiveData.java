@@ -1,14 +1,13 @@
 package view;
 
+import model.ChatPage;
 import model.ClientSocket;
 import model.Message;
 import model.UserAccount;
 
 import java.io.*;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.List;
-import java.util.Objects;
 
 public class ReceiveData extends Thread {
     private static ReceiveData receiveData;
@@ -60,6 +59,10 @@ public class ReceiveData extends Thread {
                     try {
                         userAccount = (UserAccount) in.readObject();
                         SendData.getSendData().setUserAccount(userAccount);
+                        for (Message message : userAccount.getCurrentChatPage().getMessages()) {
+                            System.out.println(message.getSenderUser().getName() + "\t" + message.getSenderUser().getUsername() + "\t" + message.getSentDate() + ":");
+                            System.out.println(message.getText());
+                        }
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                     }
@@ -67,8 +70,11 @@ public class ReceiveData extends Thread {
                 case "ReceiveMessage" -> {
                     try {
                         Message message = (Message) in.readObject();
-                        System.out.println(message.getSenderUser().getName() + "\t " + message.getSenderUser().getUsername() + " :");
-                        System.out.println(message.getText());
+                        if (userAccount.getCurrentChatPage().getUser2().getID() == userAccount.getID()) {
+                            userAccount.getCurrentChatPage().getMessages().add(message);
+                            System.out.println(message.getSenderUser().getName() + "\t" + message.getSenderUser().getUsername() + "\t" + message.getSentDate() + ":");
+                            System.out.println(message.getText());
+                        }
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                     }
@@ -83,6 +89,26 @@ public class ReceiveData extends Thread {
                                 System.out.println(onlineUser);
                             }
                         }
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+
+                case "SelectUser" -> {
+                    try {
+                        userAccount.setCurrentChatPage((ChatPage) in.readObject());
+                        for (Message message : userAccount.getCurrentChatPage().getMessages()) {
+                            System.out.println(message.getSenderUser().getName() + "\t" + message.getSenderUser().getUsername() + "\t" + message.getSentDate() + ":");
+                            System.out.println(message.getText());
+                        }
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+
+                case "NewContact" -> {
+                    try {
+                        userAccount.getContacts().add((UserAccount) in.readObject());
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                     }

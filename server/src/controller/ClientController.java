@@ -69,7 +69,10 @@ public class ClientController extends Thread {
                         String password = userAccountController.checkPassword(commands[3]);
                         String phoneNumber = userAccountController.checkPhoneNumber(commands[4]);
                         userAccount = dbController.signUp(commands[1], username, password, phoneNumber);
-                        chatRoom = new ChatPage(userAccount, chatRoom_user, dbController.getAllMessagesInChatRoom());
+                        UserAccount chatRoom_user = new UserAccount("chatroom", "chatroom", "chatroom", "0");
+                        chatRoom_user.setID(0);
+                        ChatPage chatRoom = new ChatPage(userAccount, chatRoom_user, dbController.getAllMessagesInChatRoom());
+                        userAccount.setCurrentChatPage(chatRoom);
                         out.writeUTF("Signup");
                         out.flush();
                         out.writeObject(userAccount);
@@ -89,9 +92,11 @@ public class ClientController extends Thread {
                     if (commands.length != 3) break;
                     try {
                         userAccount = dbController.login(commands[1], commands[2]);
-                        chatRoom = new ChatPage(userAccount, chatRoom_user, dbController.getAllMessagesInChatRoom());
+                        UserAccount chatRoom_user = new UserAccount("chatroom", "chatroom", "chatroom", "0");
+                        chatRoom_user.setID(0);
+                        ChatPage chatRoom = new ChatPage(userAccount, chatRoom_user, dbController.getAllMessagesInChatRoom());
+                        userAccount.setCurrentChatPage(chatRoom);
                         userAccount.setContacts(dbController.getContacts(userAccount.getID()));
-                        userAccount.getChatPages().addAll(dbController.getChatPages(userAccount));
                         out.writeUTF("Login");
                         out.flush();
                         out.writeObject(userAccount);
@@ -128,13 +133,12 @@ public class ClientController extends Thread {
 
             switch (commands[0]) {
                 case "SendMessage" -> {
-                    if (commands.length != 3) break;
-                    try {
-                        if (Long.parseLong(commands[1]) == 0) {
-                            UserAccount chatRoom = new UserAccount("chatroom", "chatroom", "chatroom", "0");
-                            chatRoom.setID(0);
-                            Message message = new Message(commands[2], userAccount, chatRoom);
-                            DBController.getDbController().addMessage(message);
+                    if (commands.length != 2) break;
+                    if (userAccount.getCurrentChatPage().getUser2().getID() == 0) {
+                        try {
+                            Message message = new Message(commands[1], userAccount, userAccount.getCurrentChatPage().getUser2());
+                            dbController.addMessage(message);
+                            userAccount.getCurrentChatPage().getMessages().add(message);
                             for (ClientController client : CommunicationHandler.getCommunicationHandler().getClientList()) {
                                 if (client != this) {
                                     client.out.writeUTF("ReceiveMessage");
@@ -142,25 +146,53 @@ public class ClientController extends Thread {
                                     client.out.writeObject(message);
                                     client.out.flush();
                                 }
+
                             }
-                        } else {
-                            Message message = new Message(commands[2], userAccount, dbController.findUser(Long.parseLong(commands[1])));
-                            DBController.getDbController().addMessage(message);
+                        } catch (Exception e) {
+                            try {
+                                out.writeUTF(e.getMessage());
+                                out.flush();
+                            } catch (Exception e1) {
+                                e1.printStackTrace(System.err);
+                            }
+                        }
+                    } else {
+                        try {
+                            if (!userAccount.getContacts().contains(userAccount.getCurrentChatPage().getUser2())) {
+                                dbController.addContact(userAccount.getID(), userAccount.getCurrentChatPage().getUser2().getID());
+                                dbController.addContact(userAccount.getCurrentChatPage().getUser2().getID(), userAccount.getID());
+                                userAccount.getContacts().add(userAccount.getCurrentChatPage().getUser2());
+                                for (ClientController client : CommunicationHandler.getCommunicationHandler().getClientList()) {
+                                    if (client.getUserAccount().getID() == userAccount.getID()) {
+                                        client.getUserAccount().getContacts().add(userAccount);
+                                        client.out.writeUTF("NewContact");
+                                        client.out.flush();
+                                        client.out.writeObject(userAccount);
+                                        client.out.flush();
+                                        break;
+                                    }
+                                }
+                            }
+                            Message message = new Message(commands[1], userAccount, userAccount.getCurrentChatPage().getUser2());
+                            dbController.addMessage(message);
+                            userAccount.getCurrentChatPage().getMessages().add(message);
                             for (ClientController client : CommunicationHandler.getCommunicationHandler().getClientList()) {
-                                if (client.userAccount.getID() == message.getReceiverUser().getID()) {
+                                if (client.getUserAccount().getID() == userAccount.getCurrentChatPage().getUser2().getID()) {
                                     client.out.writeUTF("ReceiveMessage");
                                     client.out.flush();
                                     client.out.writeObject(message);
                                     client.out.flush();
+                                    break;
                                 }
                             }
-                        }
-                    } catch (Exception e) {
-                        try {
-                            out.writeUTF(e.getMessage());
-                            out.flush();
-                        } catch (Exception e1) {
-                            e1.printStackTrace(System.err);
+
+                        } catch (Exception e) {
+                            try {
+                                out.writeUTF(e.getMessage());
+                                out.flush();
+                            } catch (Exception e1) {
+                                e1.printStackTrace(System.err);
+                            }
                         }
                     }
                 }
@@ -170,7 +202,9 @@ public class ClientController extends Thread {
                     List<UserAccount> onlineUsers = new ArrayList<>();
                     try {
                         for (ClientController client : CommunicationHandler.getCommunicationHandler().getClientList()) {
-                            onlineUsers.add(client.userAccount);
+                            if (client.getUserAccount().getID() != userAccount.getID()) {
+                                onlineUsers.add(client.userAccount);
+                            }
                         }
                         out.writeUTF("OnlineUsers");
                         out.flush();
@@ -190,21 +224,12 @@ public class ClientController extends Thread {
                     if (commands.length != 2) break;
                     try {
                         UserAccount targetUser = dbController.findUser(commands[1]);
-                        if (userAccount.getContacts().contains(targetUser)) {
-                            ChatPage newChat = null;
-                            for (ChatPage chatPage : userAccount.getChatPages()) {
-                                if (chatPage.getUser2() == targetUser || chatPage.getUser1() == targetUser) {
-                                    newChat = chatPage;
-                                    break;
-                                }
-                            }
-                            out.writeUTF("SelectUser");
-                            out.flush();
-                            out.writeObject(newChat);
-                            out.flush();
-                        } else {
-
-                        }
+                        ChatPage newChat = new ChatPage(userAccount, targetUser, dbController.getMessages(userAccount.getID(), targetUser.getID()));
+                        userAccount.setCurrentChatPage(newChat);
+                        out.writeUTF("SelectUser");
+                        out.flush();
+                        out.writeObject(newChat);
+                        out.flush();
                     } catch (Exception e) {
                         try {
                             out.writeUTF(e.getMessage());
