@@ -70,7 +70,8 @@ public class ReceiveData extends Thread {
                 case "ReceiveMessage" -> {
                     try {
                         Message message = (Message) in.readObject();
-                        if (userAccount.getCurrentChatPage().getUser2().getID() == userAccount.getID()) {
+                        if (userAccount.getCurrentChatPage().getUser1().getID() == message.getReceiverUser().getID()
+                                && userAccount.getCurrentChatPage().getUser2().getID() == message.getSenderUser().getID()) {
                             userAccount.getCurrentChatPage().getMessages().add(message);
                             System.out.println(message.getSenderUser().getName() + "\t" + message.getSenderUser().getUsername() + "\t" + message.getSentDate() + ":");
                             System.out.println(message.getText());
