@@ -240,6 +240,76 @@ public class ClientController extends Thread {
                     }
                 }
 
+                case "Ping" -> {
+                    if (commands.length != 1) break;
+                    try {
+                        out.writeUTF("Ping");
+                        out.flush();
+                        out.writeUTF("Connected");
+                        out.flush();
+                    } catch (IOException e) {
+                        e.printStackTrace(System.err);
+                    }
+                }
+
+                case "Finish" -> {
+                    if (commands.length != 1) return;
+                    try {
+                        UserAccount chatRoom_user = new UserAccount("chatroom", "chatroom", "chatroom", "0");
+                        chatRoom_user.setID(0);
+                        ChatPage chatRoom = new ChatPage(userAccount, chatRoom_user, dbController.getAllMessagesInChatRoom());
+                        userAccount.setCurrentChatPage(chatRoom);
+                        out.writeUTF("Finish");
+                        out.flush();
+                        out.writeObject(chatRoom);
+                        out.flush();
+                    } catch (Exception e) {
+                        try {
+                            out.writeUTF(e.getMessage());
+                            out.flush();
+                        } catch (Exception e1) {
+                            e1.printStackTrace(System.err);
+                        }
+                    }
+                }
+
+                case "ClearHistory" -> {
+                    if (commands.length != 1) return;
+                    if (userAccount.getCurrentChatPage().getUser2().getID() == 0) return;
+
+                    try {
+                        dbController.deleteMessages(userAccount.getID(), userAccount.getCurrentChatPage().getUser2().getID());
+                        out.writeUTF("ClearHistory");
+                        out.flush();
+                    } catch (Exception e) {
+                        try {
+                            out.writeUTF(e.getMessage());
+                            out.flush();
+                        } catch (Exception e1) {
+                            e1.printStackTrace(System.err);
+                        }
+                    }
+                }
+
+                case "SearchMessagesByUsername" -> {
+                    if (commands.length != 2) return;
+                    if (userAccount.getCurrentChatPage().getUser2().getID() != 0) return;
+                    try {
+                        List<Message> messages = dbController.searchMessagesByUsername(commands[1]);
+                        out.writeUTF("SearchMessagesByUsername");
+                        out.flush();
+                        out.writeObject(messages);
+                        out.flush();
+                    } catch (Exception e) {
+                        try {
+                            out.writeUTF(e.getMessage());
+                            out.flush();
+                        } catch (Exception e1) {
+                            e1.printStackTrace(System.err);
+                        }
+                    }
+                }
+
                 default -> {
                     try {
                         out.writeUTF("Invalid command!");

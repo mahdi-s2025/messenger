@@ -1,6 +1,5 @@
 package controller;
 
-import model.ChatPage;
 import model.Database;
 import model.Message;
 import model.UserAccount;
@@ -10,7 +9,6 @@ import java.sql.ResultSet;
 import java.sql.Statement;
 import java.text.SimpleDateFormat;
 import java.util.ArrayList;
-import java.util.Date;
 import java.util.List;
 
 public class DBController {
@@ -135,31 +133,6 @@ public class DBController {
         return messages;
     }
 
-//    public List<Message> getUserMessagesInChatRoom(UserAccount user) throws Exception {
-//        List<Message> messages = new ArrayList<>();
-//        String cmd = String.format("SELECT (message, sentDate) FROM messages WHERE (senderID = '%S' AND " +
-//                "receiverID = 0) ORDER BY sentDate", user.getID());
-//        ResultSet result = database.executeQuery(cmd);
-//        UserAccount chatRoom_user = new UserAccount("chatroom", "chatroom", "chatroom", "0");
-//        chatRoom_user.setID(0);
-//        while (result.next()) {
-//            Message message = new Message(result.getString("message"), user, chatRoom_user);
-//            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
-//            message.setSentDate(formatter.parse(result.getString("sentDate")));
-//            messages.add(message);
-//        }
-//        result.close();
-//        return messages;
-//    }
-//    public List<ChatPage> getChatPages(UserAccount user) throws Exception {
-//        List<ChatPage> chatPages = new ArrayList<>();
-//        for (UserAccount contact : user.getContacts()) {
-//            ChatPage chatPage = new ChatPage(user, contact, getMessages(user.getID(), contact.getID()));
-//            chatPages.add(chatPage);
-//        }
-//        return chatPages;
-//    }
-
     public List<Message> getAllMessagesInChatRoom() throws Exception {
         List<Message> messages = new ArrayList<>();
         String cmd = "SELECT * FROM messages WHERE receiverID = 0 ORDER BY sentDate";
@@ -169,6 +142,31 @@ public class DBController {
         while (result.next()) {
             Message message = new Message(result.getString("message"),
                     findUser(result.getLong("senderID")), chatRoom_user);
+            SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
+            message.setSentDate(formatter.parse(result.getString("sentDate")));
+            messages.add(message);
+        }
+        result.close();
+        return messages;
+    }
+
+    public void deleteMessages(long user1ID, long user2ID) throws Exception {
+        String cmd = "DELETE FROM messages WHERE receiverID = " + user1ID + " AND senderID = " + user2ID;
+        database.executeSQL(cmd);
+        cmd = "DELETE FROM messages WHERE receiverID = " + user2ID + " AND senderID = " + user1ID;
+        database.executeSQL(cmd);
+    }
+
+    public List<Message> searchMessagesByUsername(String username) throws Exception {
+        List<Message> messages = new ArrayList<>();
+        UserAccount targetUser = findUser(username);
+        String cmd = "SELECT * FROM messages WHERE senderID = " + targetUser.getID() + " AND receiverID = '0'";
+        ResultSet result = database.executeQuery(cmd);
+        UserAccount chatRoom_user = new UserAccount("chatroom", "chatroom", "chatroom", "0");
+        chatRoom_user.setID(0);
+        while (result.next()) {
+            Message message = new Message(result.getString("message"),
+                    targetUser, chatRoom_user);
             SimpleDateFormat formatter = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
             message.setSentDate(formatter.parse(result.getString("sentDate")));
             messages.add(message);

@@ -70,8 +70,8 @@ public class ReceiveData extends Thread {
                 case "ReceiveMessage" -> {
                     try {
                         Message message = (Message) in.readObject();
-                        if (userAccount.getCurrentChatPage().getUser1().getID() == message.getReceiverUser().getID()
-                                && userAccount.getCurrentChatPage().getUser2().getID() == message.getSenderUser().getID()) {
+                        if ((message.getReceiverUser().getID() == 0 && userAccount.getCurrentChatPage().getUser2().getID() == 0)
+                                || (userAccount.getCurrentChatPage().getUser2().getID() == message.getSenderUser().getID() && message.getReceiverUser().getID() != 0)) {
                             userAccount.getCurrentChatPage().getMessages().add(message);
                             System.out.println(message.getSenderUser().getName() + "\t" + message.getSenderUser().getUsername() + "\t" + message.getSentDate() + ":");
                             System.out.println(message.getText());
@@ -95,9 +95,11 @@ public class ReceiveData extends Thread {
                     }
                 }
 
-                case "SelectUser" -> {
+                case "SelectUser", "Finish" -> {
                     try {
-                        userAccount.setCurrentChatPage((ChatPage) in.readObject());
+                        ChatPage chatPage = (ChatPage) in.readObject();
+                        userAccount.setCurrentChatPage(chatPage);
+                        SendData.getSendData().getUserAccount().setCurrentChatPage(chatPage);
                         for (Message message : userAccount.getCurrentChatPage().getMessages()) {
                             System.out.println(message.getSenderUser().getName() + "\t" + message.getSenderUser().getUsername() + "\t" + message.getSentDate() + ":");
                             System.out.println(message.getText());
@@ -110,6 +112,34 @@ public class ReceiveData extends Thread {
                 case "NewContact" -> {
                     try {
                         userAccount.getContacts().add((UserAccount) in.readObject());
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+
+                case "Ping" -> {
+                    long currentTime = System.currentTimeMillis();
+                    //long currentTime = System.nanoTime();
+                    try {
+                        System.out.println(in.readUTF());
+                        System.out.println("Ping: " + (currentTime - SendData.getCurrentTime()) + "ms");
+                    } catch (Exception e) {
+                        System.out.println(e.getMessage());
+                    }
+                }
+
+                case "ClearHistory" -> System.out.println("Done!");
+
+                case "SearchMessagesByUsername" -> {
+                    try {
+                        List objects = (List) in.readObject();
+                        for (Object object : objects) {
+                            if (object instanceof Message message) {
+                                System.out.println(message.getSenderUser().getName() +"\t" +
+                                        message.getSenderUser().getUsername() + "\t" + message.getSentDate() + ":");
+                                System.out.println(message.getText());
+                            }
+                        }
                     } catch (Exception e) {
                         System.out.println(e.getMessage());
                     }

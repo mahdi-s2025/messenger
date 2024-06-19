@@ -11,6 +11,7 @@ import java.util.Scanner;
 
 public class SendData extends Thread {
     private static SendData sendData;
+    private static long currentTime;
     private Socket client;
     private UserAccount userAccount;
     private ObjectOutputStream out;
@@ -29,6 +30,10 @@ public class SendData extends Thread {
             sendData = new SendData();
         }
         return sendData;
+    }
+
+    public static long getCurrentTime() {
+        return currentTime;
     }
 
     public UserAccount getUserAccount() {
@@ -57,6 +62,12 @@ public class SendData extends Thread {
 
         while (!outputCommand.equals("exit")) {
             outputCommand = sc.nextLine();
+
+            if (outputCommand.equals("Ping")) {
+                currentTime = System.currentTimeMillis();
+                //currentTime = System.nanoTime();
+            }
+
             try {
                 out.writeUTF(outputCommand);
                 out.flush();
